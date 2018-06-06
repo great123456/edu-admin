@@ -7,22 +7,22 @@
             </el-breadcrumb>
         </div>
         <div class="container">
-            <div class="handle-box">
+            <!-- <div class="handle-box">
                 <el-select v-model="select_cate" placeholder="订单状态" class="handle-select mr10">
                     <el-option key="1" label="已完成" value="已完成订单"></el-option>
                     <el-option key="2" label="未完成" value="未完成订单"></el-option>
                 </el-select>
                 <el-input v-model="select_word" placeholder="筛选关键词" class="handle-input mr10"></el-input>
                 <el-button type="primary" icon="search" @click="search">搜索</el-button>
-            </div>
-            <el-table :data="data" border style="width: 100%" ref="multipleTable" @selection-change="handleSelectionChange">
-                <el-table-column prop="date" label="日期" sortable width="150"></el-table-column>
-                <el-table-column prop="name" label="姓名" width="120"></el-table-column>
+            </div> -->
+            <el-table :data="tableData" border style="width: 100%" ref="multipleTable">
+                <el-table-column prop="created_at" label="日期" sortable width="200"></el-table-column>
+                <el-table-column prop="customer" label="姓名" width="120"></el-table-column>
                 <el-table-column prop="phone" label="手机号" width="120"></el-table-column>
-                <el-table-column prop="phone" label="身份证号码" width="120"></el-table-column>
-                <el-table-column prop="buildingName" label="学校" width="120"></el-table-column>
-                <el-table-column prop="address" label="专业"></el-table-column>
-                <el-table-column prop="address" label="状态"></el-table-column>
+                <!-- <el-table-column prop="phone" label="身份证号码" width="120"></el-table-column> -->
+                <el-table-column prop="school" label="学校" width="120"></el-table-column>
+                <el-table-column prop="major" label="专业"></el-table-column>
+                <el-table-column prop="stages" label="状态"></el-table-column>
             </el-table>
             <div class="pagination">
                 <el-pagination @current-change="handleCurrentChange" layout="prev, pager, next" :total="1000">
@@ -65,13 +65,10 @@
     export default {
         data() {
             return {
-                url: './static/vuetable.json',
                 tableData: [],
                 cur_page: 1,
-                multipleSelection: [],
                 select_cate: '',
                 select_word: '',
-                del_list: [],
                 is_search: false,
                 editVisible: false,
                 delVisible: false,
@@ -79,33 +76,14 @@
                     name: '',
                     date: '',
                     address: ''
-                },
-                idx: -1
+                }
             }
         },
         created() {
             this.getData();
         },
         computed: {
-            data() {
-                return this.tableData.filter((d) => {
-                    let is_del = false;
-                    for (let i = 0; i < this.del_list.length; i++) {
-                        if (d.name === this.del_list[i].name) {
-                            is_del = true;
-                            break;
-                        }
-                    }
-                    if (!is_del) {
-                        if (d.address.indexOf(this.select_cate) > -1 &&
-                            (d.name.indexOf(this.select_word) > -1 ||
-                                d.address.indexOf(this.select_word) > -1)
-                        ) {
-                            return d;
-                        }
-                    }
-                })
-            }
+
         },
         methods: {
             // 分页导航
@@ -113,58 +91,30 @@
                 this.cur_page = val;
                 this.getData();
             },
-            // 获取 easy-mock 的模拟数据
             getData() {
-                // 开发环境使用 easy-mock 数据，正式环境使用 json 文件
-                if (process.env.NODE_ENV === 'development') {
-                    this.url = '/ms/table/list';
-                };
-                this.$axios.post(this.url, {
-                    page: this.cur_page
-                }).then((res) => {
-                    this.tableData = res.data.list;
+                const self = this
+                this.$axios({
+                  method: 'get',
+                  url: '/api/admin/order/list/size/100',
+                  headers: {
+                    Authorization: `bearer ${localStorage.getItem('admin-token')}`
+                  }
+                })
+                .then((res) => {
+                    console.log('res',res.data)
+                    self.tableData = res.data.data.data
                 })
             },
             search() {
                 this.is_search = true;
             },
-            formatter(row, column) {
-                return row.address;
-            },
-            filterTag(value, row) {
-                return row.tag === value;
-            },
-            handleEdit(index, row) {
-                this.idx = index;
-            },
-            handleDelete(index, row) {
-                this.idx = index;
-                this.delVisible = true;
-            },
-            delAll() {
-                const length = this.multipleSelection.length;
-                let str = '';
-                this.del_list = this.del_list.concat(this.multipleSelection);
-                for (let i = 0; i < length; i++) {
-                    str += this.multipleSelection[i].name + ' ';
-                }
-                this.$message.error('删除了' + str);
-                this.multipleSelection = [];
-            },
-            handleSelectionChange(val) {
-                this.multipleSelection = val;
-            },
             // 保存编辑
             saveEdit() {
-                this.$set(this.tableData, this.idx, this.form);
-                this.editVisible = false;
-                this.$message.success(`修改第 ${this.idx+1} 行成功`);
+
             },
             // 确定删除
             deleteRow(){
-                this.tableData.splice(this.idx, 1);
-                this.$message.success('删除成功');
-                this.delVisible = false;
+
             }
         }
     }

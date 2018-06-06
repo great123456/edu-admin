@@ -7,7 +7,7 @@ import 'element-ui/lib/theme-chalk/index.css';    // 默认主题
 // import '../static/css/theme-green/index.css';       // 浅绿色主题
 import "babel-polyfill";
 
-Vue.use(ElementUI, { size: 'small' });
+Vue.use(ElementUI);
 Vue.prototype.$axios = axios;
 
 // //使用钩子函数对路由进行权限跳转
@@ -29,6 +29,11 @@ Vue.prototype.$axios = axios;
 //         }
 //     }
 // })
+
+router.beforeEach((to, from, next) => {
+	document.title = to.meta.title
+	next()
+})
 
 new Vue({
     router,

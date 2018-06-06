@@ -18,7 +18,7 @@
                       <el-button
                         size="mini"
                         type="danger"
-                        @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+                        @click="handleDelete(scope.row)">删除</el-button>
                     </template>
                  </el-table-column>
             </el-table>
@@ -57,15 +57,15 @@
         data() {
             return {
                 url: './static/vuetable.json',
-                tableData: [{name:'南京大学'}],
+                tableData: [],
                 cur_page: 1,
                 addVisible: false,
                 delVisible: false,
                 form: {
                     name: '',
-                    date: '',
                     address: ''
-                }
+                },
+                deleteId: ''
             }
         },
         created() {
@@ -81,30 +81,69 @@
                 this.getData();
             },
             getData() {
-                // // 开发环境使用 easy-mock 数据，正式环境使用 json 文件
-                // if (process.env.NODE_ENV === 'development') {
-                //     this.url = '/ms/table/list';
-                // };
-                // this.$axios.post(this.url, {
-                //     page: this.cur_page
-                // }).then((res) => {
-                //     this.tableData = res.data.list;
-                // })
+                const self = this
+                this.$axios({
+                  method: 'get',
+                  url: '/api/admin/school/list/size/100',
+                  headers: {
+                    Authorization: `bearer ${localStorage.getItem('admin-token')}`
+                  }
+                })
+                .then((res) => {
+                    console.log('res',res.data)
+                    self.tableData = res.data.data.data
+                })
             },
             addSchool(){
               this.addVisible = true
             },
             // 保存编辑
             saveEdit() {
-
+              const self = this
+                this.$axios({
+                  method: 'post',
+                  url: '/api/admin/school/store',
+                  headers: {
+                    Authorization: `bearer ${localStorage.getItem('admin-token')}`
+                  },
+                  data: {
+                    address: self.form.address,
+                    name: self.form.name
+                  }
+                })
+                .then((res) => {
+                    if(res.data.code == 200){
+                      self.$message.success('添加成功')
+                      self.addVisible = false
+                      self.getData()
+                    }else{
+                      self.$message.error('添加失败')
+                    }
+                })
             },
             handleDelete(row){
+               this.deleteId = row.id
                this.delVisible = true
             },
             // 确定删除
             deleteRow(){
-              this.tableData = []
-              this.delVisible = false
+                const self = this
+                this.$axios({
+                  method: 'delete',
+                  url: `/api/admin/school/delete/${self.deleteId}`,
+                  headers: {
+                    Authorization: `bearer ${localStorage.getItem('admin-token')}`
+                  }
+                })
+                .then((res) => {
+                    if(res.data.code == 200){
+                      self.$message.success('删除成功')
+                      self.delVisible = false
+                      self.getData()
+                    }else{
+                      self.$message.error('删除失败')
+                    }
+                })
             }
         }
     }

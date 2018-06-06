@@ -8,20 +8,21 @@
         </div>
         <div class="container">
             <div class="handle-box">
-              <el-select v-model="select_cate" placeholder="选择学校" class="handle-select mr10">
-                    <el-option key="1" label="南京大学" value="1"></el-option>
-                    <el-option key="2" label="南京邮电学院" value="2"></el-option>
+              <el-select v-model="schoolId" placeholder="选择学校" class="handle-select mr10" @change='selectChange'>
+                    <el-option :key="item.id" :label="item.name" :value="item.id" v-for="item in schoolList"></el-option>
                 </el-select>
               <el-button type="primary" plain @click="addSchool">添加专业</el-button>
             </div>
             <el-table :data="tableData" border style="width: 100%" ref="multipleTable">
-                <el-table-column prop="name" label="专业名称"></el-table-column>
+               <el-table-column prop="created_at" label="创建日期"></el-table-column>
+                <el-table-column prop="major" label="专业名称"></el-table-column>
+                <el-table-column prop="tuition" label="学费"></el-table-column>
                  <el-table-column label="操作">
                    <template slot-scope="scope">
                       <el-button
                         size="mini"
                         type="danger"
-                        @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+                        @click="handleDelete(scope.row)">删除</el-button>
                     </template>
                  </el-table-column>
             </el-table>
@@ -32,6 +33,9 @@
             <el-form ref="form" :model="form" label-width="100px">
                 <el-form-item label="专业名称">
                     <el-input v-model="form.name"></el-input>
+                </el-form-item>
+                <el-form-item label="学费">
+                    <el-input v-model="form.tuition"></el-input>
                 </el-form-item>
             </el-form>
             <span slot="footer" class="dialog-footer">
@@ -55,19 +59,21 @@
     export default {
         data() {
             return {
-                url: './static/vuetable.json',
-                tableData: [{name:'计算机专业'}],
+                schoolList: [],
+                tableData: [],
                 cur_page: 1,
-                select_cate:'',
+                schoolId:'',
                 addVisible: false,
                 delVisible: false,
                 form: {
-                    name: ''
-                }
+                    name: '',
+                    tuition: ''
+                },
+                deleteId: ''
             }
         },
         created() {
-            this.getData();
+            this.getSchoolData();
         },
         computed: {
 
@@ -78,31 +84,89 @@
                 this.cur_page = val;
                 this.getData();
             },
-            getData() {
-                // // 开发环境使用 easy-mock 数据，正式环境使用 json 文件
-                // if (process.env.NODE_ENV === 'development') {
-                //     this.url = '/ms/table/list';
-                // };
-                // this.$axios.post(this.url, {
-                //     page: this.cur_page
-                // }).then((res) => {
-                //     this.tableData = res.data.list;
-                // })
+            getSchoolData() {
+              const self = this
+              this.$axios({
+                method: 'get',
+                url: '/api/admin/school/list/size/100',
+                headers: {
+                  Authorization: `bearer ${localStorage.getItem('admin-token')}`
+                }
+              })
+              .then((res) => {
+                  self.schoolList = res.data.data.data
+              })
+            },
+            selectChange(){
+              this.getData()
+            },
+            getData(){
+              const self = this
+              this.$axios({
+                method: 'get',
+                url: `/api/admin/major/list/school/${self.schoolId}/size/100`,
+                headers: {
+                  Authorization: `bearer ${localStorage.getItem('admin-token')}`
+                }
+              })
+              .then((res) => {
+                  console.log('res',res);
+                  self.tableData = res.data.data.data
+              })
             },
             addSchool(){
               this.addVisible = true
             },
             // 保存编辑
             saveEdit() {
-
+              const self = this
+              this.$axios({
+                method: 'post',
+                url: `/api/admin/major/store`,
+                headers: {
+                  Authorization: `bearer ${localStorage.getItem('admin-token')}`
+                },
+                data: {
+                  school_id: self.schoolId,
+                  major: self.form.name,
+                  tuition: self.form.tuition
+                }
+              })
+              .then((res) => {
+                if(res.data.code == 200){
+                  self.$message.success('添加成功')
+                  self.addVisible = false
+                  self.getData()
+                }else{
+                  self.$message.error('添加失败')
+                }
+              })
             },
             handleDelete(row){
+               this.deleteId = row.id
                this.delVisible = true
             },
             // 确定删除
             deleteRow(){
-              this.tableData = []
               this.delVisible = false
+              const self = this
+              this.$axios({
+                method: 'delete',
+                url: `/api/admin/major/delete/${self.deleteId}`,
+                headers: {
+                  Authorization: `bearer ${localStorage.getItem('admin-token')}`
+                }
+              })
+              .then((res) => {
+                  if(res.data.code == 200){
+                    self.$message.success('删除成功')
+                    self.delVisible = false
+                    self.getData()
+                  }else{
+                    self.$message.error('删除失败')
+                  }
+              })
+
             }
         }
     }
@@ -115,7 +179,7 @@
     }
 
     .handle-select {
-        width: 120px;
+        width: 200px;
     }
 
     .handle-input {

@@ -4,15 +4,15 @@
         <div class="collapse-btn" @click="collapseChage">
             <i class="el-icon-menu"></i>
         </div>
-        <div class="logo">后台管理系统</div>
+        <div class="logo">建梦教育后台管理系统</div>
         <div class="header-right">
             <div class="header-user-con">
                 <!-- 全屏显示 -->
-                <div class="btn-fullscreen" @click="handleFullScreen">
+                <!-- <div class="btn-fullscreen" @click="handleFullScreen">
                     <el-tooltip effect="dark" :content="fullscreen?`取消全屏`:`全屏`" placement="bottom">
                         <i class="el-icon-rank"></i>
                     </el-tooltip>
-                </div>
+                </div> -->
                 <!-- 用户头像 -->
                 <div class="user-avator"><img src="static/img/img.jpg"></div>
                 <!-- 用户名下拉菜单 -->
@@ -35,15 +35,13 @@
             return {
                 collapse: false,
                 fullscreen: false,
-                name: 'linxin',
-                message: 2
+                name: 'admin',
+                message: 2,
+                username: 'admin'
             }
         },
         computed:{
-            username(){
-                let username = localStorage.getItem('ms_username');
-                return username ? username : this.name;
-            }
+
         },
         methods:{
             // 用户名下拉菜单选择事件
