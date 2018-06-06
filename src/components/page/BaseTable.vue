@@ -19,13 +19,16 @@
                 <el-table-column prop="created_at" label="日期" sortable width="200"></el-table-column>
                 <el-table-column prop="customer" label="姓名" width="120"></el-table-column>
                 <el-table-column prop="phone" label="手机号" width="120"></el-table-column>
-                <!-- <el-table-column prop="phone" label="身份证号码" width="120"></el-table-column> -->
+                <el-table-column prop="address" label="地址" width="200"></el-table-column>
+                <el-table-column prop="stages" label="总分期数" width="120"></el-table-column>
+                <el-table-column prop="each" label="每期金额" width="120"></el-table-column>
+                <el-table-column prop="total" label="总金额" width="120"></el-table-column>
                 <el-table-column prop="school" label="学校" width="120"></el-table-column>
-                <el-table-column prop="major" label="专业"></el-table-column>
-                <el-table-column prop="stages" label="状态"></el-table-column>
+                <el-table-column prop="major" label="专业" width="150"></el-table-column>
+                <el-table-column prop="details.length" label="剩余期数" width="120"></el-table-column>
             </el-table>
             <div class="pagination">
-                <el-pagination @current-change="handleCurrentChange" layout="prev, pager, next" :total="1000">
+                <el-pagination @current-change="handleCurrentChange" layout="prev, pager, next" :total="total">
                 </el-pagination>
             </div>
         </div>
@@ -67,6 +70,7 @@
             return {
                 tableData: [],
                 cur_page: 1,
+                total: 0,
                 select_cate: '',
                 select_word: '',
                 is_search: false,
@@ -95,7 +99,7 @@
                 const self = this
                 this.$axios({
                   method: 'get',
-                  url: '/api/admin/order/list/size/100',
+                  url: '/api/admin/order/list/size/10?page='+self.cur_page,
                   headers: {
                     Authorization: `bearer ${localStorage.getItem('admin-token')}`
                   }
@@ -103,6 +107,7 @@
                 .then((res) => {
                     console.log('res',res.data)
                     self.tableData = res.data.data.data
+                    self.total = res.data.data.total
                 })
             },
             search() {
